@@ -22,7 +22,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "TPenaranda\\BCoin\\ServiceProvider"
+                "TPenaranda\\BCoin\\BCoinServiceProvider"
             ],
             "aliases": {
                 "BCoinServer": "TPenaranda\\BCoin\\BCoinServer"
