@@ -1,0 +1,22 @@
+{
+    "name": "tpenaranda/bcoin-laravel",
+    "description": "A Laravel 5 package to connect with BCoin full node API.",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Tate Peñaranda",
+            "email": "tate@xenir.com.ar"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "~7",
+        "laravel/framework": "~5"
+    },
+    "autoload": {
+        "psr-4": {
+            "TPenaranda\\BCoin\\": "src/"
+        }
+    }
+}
