@@ -1,6 +1,6 @@
 {
     "name": "tpenaranda/bcoin-laravel",
-    "description": "A Laravel 5 package to connect with BCoin full node API.",
+    "description": "A Laravel 5 package to connect with BCoin (bcoin.io) full node API.",
     "type": "library",
     "license": "GPL-3.0-or-later",
     "authors": [
@@ -17,6 +17,16 @@
     "autoload": {
         "psr-4": {
             "TPenaranda\\BCoin\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TPenaranda\\BCoin\\ServiceProvider"
+            ],
+            "aliases": {
+                "BCoinServer": "TPenaranda\\BCoin\\BCoinServer",
+            }
         }
     }
 }
