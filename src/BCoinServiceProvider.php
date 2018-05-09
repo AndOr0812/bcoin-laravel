@@ -14,7 +14,7 @@ class BCoinServiceProvider extends ServiceProvider
     public function boot()
     {
         return $this->publishes([
-            __DIR__ . '/src/config/bcoin.php' => config_path('bcoin.php'),
+            __DIR__ . '/config/bcoin.php' => config_path('bcoin.php'),
         ]);
     }
 
