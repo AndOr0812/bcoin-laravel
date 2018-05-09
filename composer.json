@@ -25,7 +25,7 @@
                 "TPenaranda\\BCoin\\ServiceProvider"
             ],
             "aliases": {
-                "BCoinServer": "TPenaranda\\BCoin\\BCoinServer",
+                "BCoinServer": "TPenaranda\\BCoin\\BCoinServer"
             }
         }
     }
