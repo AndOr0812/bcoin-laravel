@@ -25,8 +25,8 @@ class BCoinServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app['tpenaranda-bcoin-laravel'] = $this->app->singleton(BCoinServer::class, function ($app) {
-            return new BCoinServer;
+        $this->app->singleton('tpenaranda-bcoin-laravel', function ($app) {
+            return new BCoin;
         });
     }
 }
