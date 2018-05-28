@@ -24,7 +24,7 @@ class BCoin
     {
         $client = new GuzzleClient([
             'auth' => ['x', config('app.bcoin_api_key')],
-            'timeout' => 10,
+            'timeout' => config('bcoin.server_timeout_seconds'),
             'body' => empty($payload) ? '{}' : json_encode($payload),
             'verify' => !config('bcoin.accept_self_signed_certificates'),
         ]);
