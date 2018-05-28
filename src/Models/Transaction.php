@@ -3,18 +3,76 @@
 namespace TPenaranda\BCoin\Models;
 
 use TPenaranda\BCoin\BCoin;
+use TPenaranda\BCoin\BCoinException;
+use Cache;
 
 class Transaction extends Model
 {
     protected $hash;
 
+    public function __construct($model_data)
+    {
+        parent::__construct($model_data);
+
+        // Small hack since some endpoints of BCoin server return 'wallet_id' under 'id' key... :(
+        if (!empty($this->id)) {
+            $this->wallet_id = $this->id;
+            unset($this->id);
+        }
+    }
+
     public function getDataFromAPI(): string
+    {
+        return empty($this->wallet_id) ? $this->getDataFromBlockchain() : $this->getDataFromWallet();
+    }
+
+    public function getDataFromWallet(): string
+    {
+        return BCoin::getFromAPI("/wallet/{$this->wallet_id}/tx/{$this->hash}");
+    }
+
+    public function getDataFromBlockchain(): string
     {
         return BCoin::getFromAPI("/tx/{$this->hash}");
     }
 
-    public function getHash()
+    public function getWallet()
     {
-        return $this->hash;
+        return new Wallet(['id' => $this->wallet_id]);
+    }
+
+    protected function addAmountTransactedToWalletSatoshiAttribute(): int
+    {
+        if (empty($this->wallet_id)) {
+            throw new BCoinException("Can't calculate 'amount_transacted_to_wallet_satoshi' attribute without 'wallet_id' attribute set on the Model.");
+        }
+
+        return Cache::rememberForever("tpenaranda-bcoin:amount_transacted_to_wallet_satoshi-tx-hash-{$this->hash}", function () {
+            if (empty($this->inputs[0]->coin)) {
+                $this->hydrate($this->getDataFromBlockchain());
+            }
+
+            $total_inputs_own_wallet = $total_outputs_own_wallet = 0;
+
+            foreach ($this->inputs as $input) {
+                if (BCoin::addressBelongsToWallet($input->coin->address, $this->wallet_id)) {
+                    $total_inputs_own_wallet += $input->coin->value;
+                }
+            }
+
+            foreach ($this->outputs as $output) {
+                if (BCoin::addressBelongsToWallet($output->address, $this->wallet_id)) {
+                    $total_outputs_own_wallet += $output->value;
+                }
+            }
+
+            $amount = $total_outputs_own_wallet - $total_inputs_own_wallet;
+
+            if ($amount < 0) {
+                $amount += $this->fee;
+            }
+
+            return $amount;
+        });
     }
 }

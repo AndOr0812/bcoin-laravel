@@ -20,31 +20,20 @@ class BCoin
         };
     }
 
-    protected static function requestToAPI(string $url, array $payload = [], string $request_method = 'GET', int $cache_minutes = 10, bool $refresh_cache = false): string
+    protected static function requestToAPI(string $url, array $payload = [], string $request_method = 'GET'): string
     {
-        $request_function = function () use ($url, $payload, $request_method) {
-            $client = new GuzzleClient([
-                'auth' => ['x', config('app.bcoin_api_key')],
-                'timeout' => 30,
-                'body' => empty($payload) ? '{}' : json_encode($payload),
-                'verify' => false,
-            ]);
+        $client = new GuzzleClient([
+            'auth' => ['x', config('app.bcoin_api_key')],
+            'timeout' => 10,
+            'body' => empty($payload) ? '{}' : json_encode($payload),
+            'verify' => !config('bcoin.accept_self_signed_certificates'),
+        ]);
 
-            $full_url = 'https://' . config('app.bcoin_server_ip') . ':' . config('app.bcoin_server_port') . $url;
+        $protocol = empty(config('bcoin.server_ssl')) ? 'http' : 'https';
 
-            return $client->request($request_method, $full_url)->getBody()->getContents();
-        };
+        $full_url = $protocol . '://' . config('bcoin.server_ip') . ':' . config('bcoin.server_port') . $url;
 
-        $cache_key = md5($url . json_encode($payload) . $request_method);
-
-        if (empty($refresh_cache)) {
-            $request_content = Cache::remember($cache_key, $cache_minutes, $request_function);
-        } else {
-            $request_content = $request_function();
-            Cache::put($cache_key, $request_content, $cache_minutes);
-        }
-
-        return $request_content;
+        return $client->request($request_method, $full_url)->getBody()->getContents();
     }
 
     public static function getFromAPI(string $url, int $cache_minutes = 10, bool $refresh_cache = false): string
@@ -54,12 +43,12 @@ class BCoin
 
     public static function putOnAPI(string $url, array $payload = []): string
     {
-        return static::requestToAPI($url, $payload, 'PUT', $cache_minutes = 0);
+        return static::requestToAPI($url, $payload, 'PUT');
     }
 
     public static function postToAPI(string $url, array $payload = []): string
     {
-        return static::requestToAPI($url, $payload, 'POST', $cache_minutes = 0);
+        return static::requestToAPI($url, $payload, 'POST');
     }
 
     public function getServer()
@@ -69,7 +58,7 @@ class BCoin
 
     public function getWallet(string $wallet_id = 'primary')
     {
-        return new Wallet($wallet_id);
+        return new Wallet(['id' => $wallet_id]);
     }
 
     public function getWalletsIDs()
@@ -77,9 +66,16 @@ class BCoin
         return collect(json_decode(static::getFromAPI('/wallet/_admin/wallets')));
     }
 
-    public function getTransaction(string $transaction_hash)
+    public function getTransaction(string $transaction_hash, string $wallet_id = null)
     {
-        return new Transaction($transaction_hash);
+        return new Transaction(['hash' => $transaction_hash, 'wallet_id' => $wallet_id]);
+    }
+
+    public function getAllTransactions()
+    {
+        return static::getWalletsIDs()->transform(function ($wallet_id) {
+            return static::getWalletTransactionsHistory($wallet_id);
+        })->flatten();
     }
 
     public function backupWallets(string $destination_folder)
@@ -96,7 +92,7 @@ class BCoin
         return new Wallet(static::putOnAPI("/wallet/{$wallet_id}", $opts));
     }
 
-    public function getWalletTransactionsHistory(string $wallet_id)
+    public static function getWalletTransactionsHistory(string $wallet_id)
     {
         $transactions = collect();
 
@@ -107,7 +103,7 @@ class BCoin
         return $transactions;
     }
 
-    public function getWalletCoins(string $wallet_id)
+    public function getWalletCoins(string $wallet_id = 'primary')
     {
         $coins = collect();
 
@@ -118,9 +114,14 @@ class BCoin
         return $coins;
     }
 
-    public function addressBelongsToWallet(string $wallet_id, string $address): bool
+    public function getCoin(string $hash, int $index)
     {
-        return Cache::rememberForever("address-{$address}-belongs-to-wallet-{$wallet_id}", function () use ($wallet_id, $address) {
+        return new Coin(['hash' => $hash, 'index' => $index]);
+    }
+
+    public static function addressBelongsToWallet(string $address, string $wallet_id): bool
+    {
+        return Cache::rememberForever("tpenaranda-bcoin:address-{$address}-belongs-to-wallet-{$wallet_id}", function () use ($wallet_id, $address) {
             try {
                 return (bool) static::getFromAPI("/wallet/{$wallet_id}/key/{$address}");
             } catch (GuzzleClientException $e) {
@@ -133,24 +134,40 @@ class BCoin
         });
     }
 
-    public function broadcastTransaction(string $transaction_tx)
+    public function broadcastTransaction(string $transaction_tx): bool
     {
         $response = json_decode(static::postToAPI('/broadcast', ['tx' => $transaction_tx]));
 
         return !empty($response->success);
     }
 
-    public function broadcastAll()
+    public function broadcastAll(): bool
     {
         $response = static::postToAPI('/wallet/_admin/resend');
 
         return !empty($response->success);
     }
 
-    public function zapWalletTransactions(string $wallet_id, int $seconds = 900)
+    public function zapWalletTransactions(string $wallet_id, int $seconds = 900): bool
     {
         $response = static::postToAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
 
         return !empty($response->success);
+    }
+
+    public function getConfirmedBalanceForWalletInSatoshi(string $wallet_id = 'primary')
+    {
+        $confirmed_satoshi = 0;
+
+        foreach (static::getWalletCoins($wallet_id) as $coin) {
+            $transaction = static::getTransaction($coin->hash, $wallet_id);
+
+            if ($transaction->confirmations >= config('bcoin.number_of_confirmations_to_consider_transaction_done')) {
+                $confirmed_satoshi += $coin->value;
+            }
+        }
+
+        return $confirmed_satoshi;
+
     }
 }

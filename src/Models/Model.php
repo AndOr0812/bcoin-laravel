@@ -2,6 +2,7 @@
 
 namespace TPenaranda\BCoin\Models;
 
+use TPenaranda\BCoin\BCoinException;
 use ReflectionObject;
 
 abstract class Model
@@ -12,12 +13,18 @@ abstract class Model
     {
         if (is_object($model_data)) {
             $this->hydrate(json_encode($model_data));
-        } elseif (empty(json_decode($model_data))) {
-            $this->hash = $model_data;
+        } elseif (is_array($model_data)) {
+            foreach ($model_data as $key => $value) {
+                $this->$key = $value;
+            }
             $this->refresh();
-        } else {
+        } elseif (json_decode($model_data)) {
             $this->hydrate($model_data);
+        } else {
+            throw new BCoinException("Can't construct BCoin Model with ${model_data} data. __construct method expects array, object or JSON encoded data.");
         }
+
+        return true;
     }
 
     public function refresh(): Model
@@ -44,5 +51,36 @@ abstract class Model
         }
 
         return $this;
+    }
+
+    protected function getMethodNameToHandleProperty(string $property)
+    {
+        if (method_exists($this, $method_name = 'add' . ucfirst(camel_case($property)) . 'Attribute')) {
+            return $method_name;
+        }
+
+        return false;
+    }
+
+    public function __get($key)
+    {
+        if (property_exists($this, $key)) {
+            return $this->$key;
+        }
+
+        if (is_string($key) && ($method_name = $this->getMethodNameToHandleProperty($key))) {
+            return $this->$method_name();
+        }
+
+        return null;
+    }
+
+    public function __isset($key) {
+        return property_exists($this, $key) || !empty($this->getMethodNameToHandleProperty($key));
+    }
+
+    public function toArray()
+    {
+        return get_object_vars($this);
     }
 }

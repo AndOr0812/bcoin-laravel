@@ -3,6 +3,7 @@
 namespace TPenaranda\BCoin\Models;
 
 use TPenaranda\BCoin\BCoin;
+use TPenaranda\BCoin\BCoinException;
 
 class Wallet extends Model
 {
@@ -11,11 +12,6 @@ class Wallet extends Model
     public function getDataFromAPI(): string
     {
         return BCoin::getFromAPI("/wallet/{$this->id}");
-    }
-
-    public function getId()
-    {
-        return $this->id;
     }
 
     public function sendTransaction(string $destination_address, int $amount_in_satoshi, array $opts = [])
