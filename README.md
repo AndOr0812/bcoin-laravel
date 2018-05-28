@@ -26,6 +26,7 @@ return [
     'server_ip' => env('BCOIN_SERVER_IP', '127.0.0.1'),
     'server_port' => env('BCOIN_SERVER_PORT', 18333),
     'server_ssl' => env('BCOIN_SERVER_SSL', false),
+];
 ```
 
 ## Usage
