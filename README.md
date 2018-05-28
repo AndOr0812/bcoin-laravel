@@ -3,8 +3,8 @@ A Laravel 5 package to connect with BCoin full node API
 
 ## About package
 This packages integrates a BCoin (bcoin.io) Bitcoin node to a Laravel App by using BCoin API.
-Also, it performs some calculations that BCoin doesn't returns (like BTC amount transcated to a Walelt).
-It's a work in progress project but stable.
+Also, it performs some calculations that BCoin doesn't returns (like amount transcated from/to a Wallet).
+Some basic Cache is used to avoid unnecesary API calls. It's a work in progress project but stable.
 
 ## Installation for Laravel 5
 
@@ -39,23 +39,21 @@ use BCoinNode; // Package Facade
 $serverModel = BCoinNode::getServer() // Server Model
 $serverModel->version // 'v1.0.0-beta.14' string
 
-$transaction = BCoinNode::getTransaction('<transaction_hash>|a42785c8351d896329dfeab4b95bbc1185e7ffb284f5f80275bd0df3632fccbb') // Transaction Model
+$transaction = BCoinNode::getTransaction('a42785c8351d896329dfeab4b95bbc1185e7ffb284f5f80275bd0df3632fccbb') // Transaction Model
 
-$collection = BCoinNode::getWalletTransactionsHistory('<wallet_id>|primary') // Collection of Transactions Models
+$collection = BCoinNode::getWalletTransactionsHistory('primary') // Collection of Transactions Models
 
 $wallet = BCoinNode::createWallet('my_new_wallet') // Wallet Model
 
-$wallet = BCoinNode::getWallet('<wallet_id>|primary') // Wallet Model
+$wallet = BCoinNode::getWallet('primary') // Wallet Model
+
+$integer = $wallet->confirmed_satoshi // Get Wallet confirmed balance using 'number_of_confirmations_to_consider_transaction_done' config parameter.
+
+$transaction = $wallet->sendTransaction(<destination_address>, <amount_in_satoshi>, <opts>)
 
 $boolean = BCoinNode::addressBelongsToWallet(<address>, <wallet_id>) // Check if a BTC address belongs to a Node Wallet
 
-$integer = BCoinNode::getConfirmedBalanceForWalletInSatoshi(<wallet_id>) // Get Wallet confirmed balance using 'number_of_confirmations_to_consider_transaction_done' config parameter.
-
-Next release will include also these methods on BCoinNode Model side.
-$integer = $wallet->getConfirmedBalanceForWalletInSatoshi()
-$collection = $wallet->getTransactionsHistory()
-
-Have a look to TPenaranda\BCoin\BCoin class for undocumented methods (a lot).
+*Have a look to TPenaranda\BCoin\BCoin class for (many) undocumented methods.*
 ```
 
 Donations => bitcoin:38NYkcaqSCxijvsfvgGexPsNkVZLfaTw54

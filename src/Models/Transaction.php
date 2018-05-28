@@ -8,6 +8,7 @@ use Cache;
 
 class Transaction extends Model
 {
+    const BASE_CACHE_KEY_NAME = 'tpenaranda-bcoin:transaction_hash-';
     protected $hash;
 
     public function __construct($model_data)
@@ -36,9 +37,14 @@ class Transaction extends Model
         return BCoin::getFromAPI("/tx/{$this->hash}");
     }
 
+    public function getCacheKey()
+    {
+        return self::BASE_CACHE_KEY_NAME . $this->hash;
+    }
+
     public function getWallet()
     {
-        return new Wallet(['id' => $this->wallet_id]);
+        return BCoin::getWallet($this->wallet_id);
     }
 
     protected function addAmountTransactedToWalletSatoshiAttribute(): int

@@ -56,17 +56,35 @@ class BCoin
         return new Server();
     }
 
-    public function getWallet(string $wallet_id = 'primary')
+    public static function getWallet(string $wallet_id = 'primary')
     {
+        $wallet = new Wallet(['id' => $wallet_id]);
+
+        $wallet_cached = Cache::get($wallet->getCacheKey());
+
+        if (!empty($wallet_cached) && $wallet->state->tx === $wallet_cached->state->tx) {
+            return $wallet_cached;
+        }
+
+        return $wallet;
+    }
+
+    public static function getWalletFromCache(string $wallet_id = 'primary')
+    {
+        if (!empty($wallet_cached = Cache::get(Wallet::BASE_CACHE_KEY_NAME . $wallet_id))) {
+            return $wallet_cached;
+        }
+
         return new Wallet(['id' => $wallet_id]);
     }
+
 
     public function getWalletsIDs()
     {
         return collect(json_decode(static::getFromAPI('/wallet/_admin/wallets')));
     }
 
-    public function getTransaction(string $transaction_hash, string $wallet_id = null)
+    public static function getTransaction(string $transaction_hash, string $wallet_id = null)
     {
         return new Transaction(['hash' => $transaction_hash, 'wallet_id' => $wallet_id]);
     }
@@ -103,7 +121,7 @@ class BCoin
         return $transactions;
     }
 
-    public function getWalletCoins(string $wallet_id = 'primary')
+    public static function getWalletCoins(string $wallet_id = 'primary')
     {
         $coins = collect();
 
@@ -153,21 +171,5 @@ class BCoin
         $response = static::postToAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
 
         return !empty($response->success);
-    }
-
-    public function getConfirmedBalanceForWalletInSatoshi(string $wallet_id = 'primary')
-    {
-        $confirmed_satoshi = 0;
-
-        foreach (static::getWalletCoins($wallet_id) as $coin) {
-            $transaction = static::getTransaction($coin->hash, $wallet_id);
-
-            if ($transaction->confirmations >= config('bcoin.number_of_confirmations_to_consider_transaction_done')) {
-                $confirmed_satoshi += $coin->value;
-            }
-        }
-
-        return $confirmed_satoshi;
-
     }
 }

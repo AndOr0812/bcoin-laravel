@@ -3,7 +3,7 @@
 namespace TPenaranda\BCoin\Models;
 
 use TPenaranda\BCoin\BCoinException;
-use ReflectionObject;
+use Cache, ReflectionObject;
 
 abstract class Model
 {
@@ -62,6 +62,11 @@ abstract class Model
         return false;
     }
 
+    public function updateCache()
+    {
+        Cache::forever($this->getCacheKey(), $this);
+    }
+
     public function __get($key)
     {
         if (property_exists($this, $key)) {
@@ -69,13 +74,21 @@ abstract class Model
         }
 
         if (is_string($key) && ($method_name = $this->getMethodNameToHandleProperty($key))) {
-            return $this->$method_name();
+            $value = $this->$method_name();
+            $this->$key  = $value;
+
+            if (method_exists($this, 'getCacheKey')) {
+                $this->updateCache();
+            }
+
+            return $value;
         }
 
         return null;
     }
 
-    public function __isset($key) {
+    public function __isset($key)
+    {
         return property_exists($this, $key) || !empty($this->getMethodNameToHandleProperty($key));
     }
 
