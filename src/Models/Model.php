@@ -67,6 +67,11 @@ abstract class Model
         Cache::forever($this->getCacheKey(), $this);
     }
 
+    public function removeFromCache()
+    {
+        Cache::forget($this->getCacheKey());
+    }
+
     public function __get($key)
     {
         if (property_exists($this, $key)) {

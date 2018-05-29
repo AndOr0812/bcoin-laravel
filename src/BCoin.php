@@ -11,7 +11,7 @@ use Cache;
 class BCoin
 {
     const DEFAULT_MAX_TRANSACTION_FEE_IN_SATOSHI = 100000;
-    const DEFAULT_RATE_IN_SATOSHIS_PER_KB = 10000;
+    const DEFAULT_RATE_IN_SATOSHIS_PER_KB = 30000;
 
     public function __construct()
     {
@@ -87,6 +87,12 @@ class BCoin
     public static function getTransaction(string $transaction_hash, string $wallet_id = null)
     {
         return new Transaction(['hash' => $transaction_hash, 'wallet_id' => $wallet_id]);
+    }
+
+
+    public static function getTransactionByAddress(string $transaction_address)
+    {
+        return new Transaction(static::getFromAPI("/tx/address/{$transaction_address}"));
     }
 
     public function getAllTransactions()
