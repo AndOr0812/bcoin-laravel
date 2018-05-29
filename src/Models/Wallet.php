@@ -54,12 +54,12 @@ class Wallet extends Model
     {
         $confirmed_satoshi = 0;
 
-        $this->coins->each(function ($coin) use ($confirmed_satoshi) {
+        foreach ($this->coins as $coin) {
             $transaction = BCoin::getTransaction($coin->hash, $this->id);
             if ($transaction->confirmations >= config('bcoin.number_of_confirmations_to_consider_transaction_done')) {
                 $confirmed_satoshi += $coin->value;
             }
-        });
+        }
 
         return $confirmed_satoshi;
     }
