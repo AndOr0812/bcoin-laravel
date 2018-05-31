@@ -53,8 +53,8 @@ class Transaction extends Model
             throw new BCoinException("Can't calculate 'amount_transacted_to_wallet_satoshi' attribute without 'wallet_id' attribute set on the Model.");
         }
 
-        return Cache::rememberForever("tpenaranda-bcoin:amount_transacted_to_wallet_satoshi-tx-hash-{$this->hash}", function () {
-            if (empty($this->inputs[0]->coin)) {
+        return Cache::rememberForever("tpenaranda-bcoin:amount-in-satoshi-transacted-tx_hash:{$this->hash}-wallet_id:{$this->wallet_id}", function () {
+            if (empty($this->inputs[0]->coin) || empty($transaction->fee)) {
                 $this->hydrate($this->getDataFromBlockchain());
             }
 
