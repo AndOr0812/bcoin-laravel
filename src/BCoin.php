@@ -54,19 +54,10 @@ class BCoin
     public function getServer()
     {
         return new Server();
-    }
 
     public static function getWallet(string $wallet_id = 'primary')
     {
-        $wallet = new Wallet(['id' => $wallet_id]);
-
-        $wallet_cached = Cache::get($wallet->getCacheKey());
-
-        if (!empty($wallet_cached) && $wallet->state->tx === $wallet_cached->state->tx) {
-            return $wallet_cached;
-        }
-
-        return $wallet;
+        return new Wallet(['id' => $wallet_id]);
     }
 
     public static function getWalletFromCache(string $wallet_id = 'primary')

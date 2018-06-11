@@ -52,15 +52,17 @@ class Wallet extends Model
 
     protected function addConfirmedSatoshiAttribute(): int
     {
-        $confirmed_satoshi = 0;
+        return Cache::remember("{$this->getCacheKey()}_confirmed_satoshi", $minutes = 2, function () {
+            $confirmed_satoshi = 0;
 
-        foreach ($this->coins as $coin) {
-            $transaction = BCoin::getTransaction($coin->hash, $this->id);
-            if ($transaction->confirmations >= config('bcoin.number_of_confirmations_to_consider_transaction_done')) {
-                $confirmed_satoshi += $coin->value;
+            foreach ($this->coins as $coin) {
+                $transaction = BCoin::getTransaction($coin->hash, $this->id);
+                if ($transaction->confirmations >= config('bcoin.number_of_confirmations_to_consider_transaction_done')) {
+                    $confirmed_satoshi += $coin->value;
+                }
             }
-        }
 
-        return $confirmed_satoshi;
+            return $confirmed_satoshi;
+        })
     }
 }
