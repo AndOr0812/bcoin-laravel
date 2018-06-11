@@ -54,6 +54,7 @@ class BCoin
     public function getServer()
     {
         return new Server();
+    }
 
     public static function getWallet(string $wallet_id = 'primary')
     {
