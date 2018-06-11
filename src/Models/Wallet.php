@@ -63,6 +63,6 @@ class Wallet extends Model
             }
 
             return $confirmed_satoshi;
-        })
+        });
     }
 }
