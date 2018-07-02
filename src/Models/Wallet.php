@@ -40,6 +40,7 @@ class Wallet extends Model
         $default_opts = [
             'maxFee' => BCoin::DEFAULT_MAX_TRANSACTION_FEE_IN_SATOSHI,
             'rate' => BCoin::DEFAULT_RATE_IN_SATOSHIS_PER_KB,
+            'subtractFee' => true,
         ];
 
         return new Transaction(BCoin::postToAPI("/wallet/{$this->id}/send", array_merge($payload, array_merge($default_opts, $opts))));
