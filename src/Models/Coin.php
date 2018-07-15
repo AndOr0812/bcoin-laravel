@@ -11,6 +11,6 @@ class Coin extends Model
 
     public function getDataFromAPI(): string
     {
-        return BCoin::getFromAPI("/coin/{$this->hash}/{$this->index}");
+        return BCoin::getFromServerAPI("/coin/{$this->hash}/{$this->index}");
     }
 }

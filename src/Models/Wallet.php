@@ -14,12 +14,17 @@ class Wallet extends Model
 
     public function getDataFromAPI(): string
     {
-        return BCoin::getFromAPI("/wallet/{$this->id}");
+        return BCoin::getFromWalletAPI("/wallet/{$this->id}");
     }
 
     public function getCacheKey(): string
     {
         return self::BASE_CACHE_KEY_NAME . $this->id;
+    }
+
+    public function deriveNestedAddress(): string
+    {
+        return BCoin::postToWalletAPI("/wallet/{$this->id}/nested", ['account' => 'default']);
     }
 
     public function sendTransaction(string $destination_address, int $amount_in_satoshi, array $opts = []): Transaction
@@ -43,12 +48,19 @@ class Wallet extends Model
             'subtractFee' => true,
         ];
 
-        return new Transaction(BCoin::postToAPI("/wallet/{$this->id}/send", array_merge($payload, array_merge($default_opts, $opts))));
+        return new Transaction(BCoin::postToWalletAPI("/wallet/{$this->id}/send", array_merge($payload, array_merge($default_opts, $opts))));
     }
 
     protected function addCoinsAttribute(): Collection
     {
         return BCoin::getWalletCoins($this->id);
+    }
+
+    protected function addAddressAttribute(): string
+    {
+        return Cache::remember("{$this->getCacheKey()}_address", $minutes = 60, function () {
+            return json_decode($this->deriveNestedAddress())->address;
+        });
     }
 
     protected function addConfirmedSatoshiAttribute(): int

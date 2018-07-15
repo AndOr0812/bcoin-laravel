@@ -13,6 +13,6 @@ class Server extends Model
 
     public function getDataFromAPI(): string
     {
-        return BCoin::getFromAPI('/');
+        return BCoin::getFromServerAPI('/');
     }
 }

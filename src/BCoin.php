@@ -20,10 +20,28 @@ class BCoin
         };
     }
 
-    protected static function requestToAPI(string $url, array $payload = [], string $request_method = 'GET'): string
+    protected static function requestToWalletAPI(string $url, array $payload = [], string $request_method = 'GET'): string
     {
         $client = new GuzzleClient([
-            'auth' => ['x', config('app.bcoin_api_key')],
+            'auth' => ['x', config('bcoin.wallet_api_key')],
+            'timeout' => config('bcoin.server_timeout_seconds'),
+            'body' => empty($payload) ? '{}' : json_encode($payload),
+            'verify' => !config('bcoin.accept_self_signed_certificates'),
+        ]);
+
+        $protocol = empty(config('bcoin.wallet_server_ssl')) ? 'http' : 'https';
+
+        $server_address = "{$protocol}://" . config('bcoin.wallet_server_ip') . ':' . config('bcoin.wallet_server_port');
+
+        $full_url =  "{$server_address}{$url}?token=" . config('bcoin.wallet_admin_token');
+
+        return $client->request($request_method, $full_url)->getBody()->getContents();
+    }
+
+    protected static function requestToServerAPI(string $url, array $payload = [], string $request_method = 'GET'): string
+    {
+        $client = new GuzzleClient([
+            'auth' => ['x', config('bcoin.api_key')],
             'timeout' => config('bcoin.server_timeout_seconds'),
             'body' => empty($payload) ? '{}' : json_encode($payload),
             'verify' => !config('bcoin.accept_self_signed_certificates'),
@@ -31,24 +49,39 @@ class BCoin
 
         $protocol = empty(config('bcoin.server_ssl')) ? 'http' : 'https';
 
-        $full_url = $protocol . '://' . config('bcoin.server_ip') . ':' . config('bcoin.server_port') . $url;
+        $server_address = "{$protocol}://" . config('bcoin.server_ip') . ':' . config('bcoin.server_port');
 
-        return $client->request($request_method, $full_url)->getBody()->getContents();
+        return $client->request($request_method, "{$server_address}{$url}")->getBody()->getContents();
     }
 
-    public static function getFromAPI(string $url, int $cache_minutes = 10, bool $refresh_cache = false): string
+    public static function getFromServerAPI(string $url, int $cache_minutes = 10, bool $refresh_cache = false): string
     {
-        return static::requestToAPI($url, [], 'GET', $cache_minutes, $refresh_cache);
+        return static::requestToServerAPI($url, [], 'GET', $cache_minutes, $refresh_cache);
     }
 
-    public static function putOnAPI(string $url, array $payload = []): string
+    public static function putOnServerAPI(string $url, array $payload = []): string
     {
-        return static::requestToAPI($url, $payload, 'PUT');
+        return static::requestToServerAPI($url, $payload, 'PUT');
     }
 
-    public static function postToAPI(string $url, array $payload = []): string
+    public static function postToServerAPI(string $url, array $payload = []): string
     {
-        return static::requestToAPI($url, $payload, 'POST');
+        return static::requestToServerAPI($url, $payload, 'POST');
+    }
+
+    public static function getFromWalletAPI(string $url, int $cache_minutes = 10, bool $refresh_cache = false): string
+    {
+        return static::requestToWalletAPI($url, [], 'GET', $cache_minutes, $refresh_cache);
+    }
+
+    public static function putOnWalletAPI(string $url, array $payload = []): string
+    {
+        return static::requestToWalletAPI($url, $payload, 'PUT');
+    }
+
+    public static function postToWalletAPI(string $url, array $payload = []): string
+    {
+        return static::requestToWalletAPI($url, $payload, 'POST');
     }
 
     public function getServer()
@@ -73,7 +106,7 @@ class BCoin
 
     public function getWalletsIDs()
     {
-        return collect(json_decode(static::getFromAPI('/wallet/_admin/wallets')));
+        return collect(json_decode(static::getFromWalletAPI('/wallet')));
     }
 
     public static function getTransaction(string $transaction_hash, string $wallet_id = null)
@@ -84,7 +117,7 @@ class BCoin
 
     public static function getTransactionByAddress(string $transaction_address)
     {
-        return new Transaction(static::getFromAPI("/tx/address/{$transaction_address}"));
+        return new Transaction(static::getFromServerAPI("/tx/address/{$transaction_address}"));
     }
 
     public function getAllTransactions()
@@ -98,21 +131,21 @@ class BCoin
     {
         $destination_folder = str_finish($destination_folder, '/');
         $path = "{$destination_folder}walletdb-backup-" . Carbon::now()->format('YmdHis') . '.ldb';
-        $response = json_decode(static::postToAPI("/wallet/_admin/backup?path={$path}"));
+        $response = json_decode(static::postToWalletAPI("/backup?path={$path}"));
 
         return !empty($response->success);
     }
 
     public function createWallet(string $wallet_id, array $opts = ['witness' => true])
     {
-        return new Wallet(static::putOnAPI("/wallet/{$wallet_id}", $opts));
+        return new Wallet(static::putOnWalletAPI("/wallet/{$wallet_id}", $opts));
     }
 
     public static function getWalletTransactionsHistory(string $wallet_id)
     {
         $transactions = collect();
 
-        foreach (json_decode(static::getFromAPI("/wallet/{$wallet_id}/tx/history")) ?? [] as $transaction_data) {
+        foreach (json_decode(static::getFromWalletAPI("/wallet/{$wallet_id}/tx/history")) ?? [] as $transaction_data) {
             $transactions->push(new Transaction($transaction_data));
         }
 
@@ -123,7 +156,7 @@ class BCoin
     {
         $coins = collect();
 
-        foreach (json_decode(static::getFromAPI("/wallet/{$wallet_id}/coin")) ?? [] as $coin_data) {
+        foreach (json_decode(static::getFromWalletAPI("/wallet/{$wallet_id}/coin")) ?? [] as $coin_data) {
             $coins->push(new Coin($coin_data));
         }
 
@@ -139,7 +172,7 @@ class BCoin
     {
         return Cache::rememberForever("tpenaranda-bcoin:address-{$address}-belongs-to-wallet-{$wallet_id}", function () use ($wallet_id, $address) {
             try {
-                return (bool) static::getFromAPI("/wallet/{$wallet_id}/key/{$address}");
+                return (bool) static::getFromWalletAPI("/wallet/{$wallet_id}/key/{$address}");
             } catch (GuzzleClientException $e) {
                 if (404 != $e->getCode()) {
                     throw $e;
@@ -152,21 +185,21 @@ class BCoin
 
     public function broadcastTransaction(string $transaction_tx): bool
     {
-        $response = json_decode(static::postToAPI('/broadcast', ['tx' => $transaction_tx]));
+        $response = json_decode(static::postToServerAPI('/broadcast', ['tx' => $transaction_tx]));
 
         return !empty($response->success);
     }
 
     public function broadcastAll(): bool
     {
-        $response = static::postToAPI('/wallet/_admin/resend');
+        $response = static::postToServerAPI('/resend');
 
         return !empty($response->success);
     }
 
     public function zapWalletTransactions(string $wallet_id, int $seconds = 900): bool
     {
-        $response = static::postToAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
+        $response = static::postToWalletAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
 
         return !empty($response->success);
     }

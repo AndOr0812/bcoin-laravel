@@ -11,17 +11,6 @@ class Transaction extends Model
     const BASE_CACHE_KEY_NAME = 'tpenaranda-bcoin:transaction_hash-';
     protected $hash;
 
-    public function __construct($model_data)
-    {
-        parent::__construct($model_data);
-
-        // Small hack since some endpoints of BCoin server return 'wallet_id' under 'id' key... :(
-        if (!empty($this->id)) {
-            $this->wallet_id = $this->id;
-            unset($this->id);
-        }
-    }
-
     public function getDataFromAPI(): string
     {
         return empty($this->wallet_id) ? $this->getDataFromBlockchain() : $this->getDataFromWallet();
@@ -29,12 +18,12 @@ class Transaction extends Model
 
     public function getDataFromWallet(): string
     {
-        return BCoin::getFromAPI("/wallet/{$this->wallet_id}/tx/{$this->hash}");
+        return BCoin::getFromWalletAPI("/wallet/{$this->wallet_id}/tx/{$this->hash}");
     }
 
     public function getDataFromBlockchain(): string
     {
-        return BCoin::getFromAPI("/tx/{$this->hash}");
+        return BCoin::getFromServerAPI("/tx/{$this->hash}");
     }
 
     public function getCacheKey()
