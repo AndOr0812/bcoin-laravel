@@ -19,10 +19,14 @@ class Wallet extends Model
 
     public function getCacheKey(): string
     {
+        if (empty($this->id)) {
+            throw new BCoinException("Can't get cache key without a valid id.");
+        }
+
         return self::BASE_CACHE_KEY_NAME . $this->id;
     }
 
-    public function deriveNestedAddress(): string
+    public function getNestedAddress(): string
     {
         return BCoin::postToWalletAPI("/wallet/{$this->id}/nested", ['account' => 'default']);
     }
@@ -51,6 +55,10 @@ class Wallet extends Model
         return new Transaction(BCoin::postToWalletAPI("/wallet/{$this->id}/send", array_merge($payload, array_merge($default_opts, $opts))));
     }
 
+    public function forgetCurrentAddress() {
+        return Cache::forget("{$this->getCacheKey()}_address");
+    }
+
     protected function addCoinsAttribute(): Collection
     {
         return BCoin::getWalletCoins($this->id);
@@ -58,8 +66,8 @@ class Wallet extends Model
 
     protected function addAddressAttribute(): string
     {
-        return Cache::remember("{$this->getCacheKey()}_address", $minutes = 60, function () {
-            return json_decode($this->deriveNestedAddress())->address;
+        return Cache::rememberForever("{$this->getCacheKey()}_address", function () {
+            return json_decode($this->getNestedAddress())->address;
         });
     }
 
