@@ -43,12 +43,12 @@ class Transaction extends Model
         }
 
         return Cache::rememberForever("tpenaranda-bcoin:amount-in-satoshi-transacted-tx_hash:{$this->hash}-wallet_id:{$this->wallet_id}", function () {
-            if (empty($this->block)) {
-                return null;
-            }
-
             if (empty($this->inputs[0]->coin) || empty($transaction->fee)) {
                 $this->hydrate($this->getDataFromBlockchain());
+            }
+
+            if (empty($this->block)) {
+                return null;
             }
 
             $total_inputs_own_wallet = $total_outputs_own_wallet = 0;
