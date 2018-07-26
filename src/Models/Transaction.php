@@ -36,7 +36,7 @@ class Transaction extends Model
         return BCoin::getWallet($this->wallet_id);
     }
 
-    protected function addAmountTransactedToWalletSatoshiAttribute(): int
+    protected function addAmountTransactedToWalletSatoshiAttribute()
     {
         if (empty($this->wallet_id)) {
             throw new BCoinException("Can't calculate 'amount_transacted_to_wallet_satoshi' attribute without 'wallet_id' attribute set on the Model.");
