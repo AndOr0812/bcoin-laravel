@@ -54,13 +54,13 @@ class Transaction extends Model
             $total_inputs_own_wallet = $total_outputs_own_wallet = 0;
 
             foreach ($this->inputs as $input) {
-                if (BCoin::addressBelongsToWallet($input->coin->address, $this->wallet_id)) {
+                if (!empty($input->coin->address) && BCoin::addressBelongsToWallet($input->coin->address, $this->wallet_id)) {
                     $total_inputs_own_wallet += $input->coin->value;
                 }
             }
 
             foreach ($this->outputs as $output) {
-                if (BCoin::addressBelongsToWallet($output->address, $this->wallet_id)) {
+                if (!empty($output->address) && BCoin::addressBelongsToWallet($output->address, $this->wallet_id)) {
                     $total_outputs_own_wallet += $output->value;
                 }
             }
