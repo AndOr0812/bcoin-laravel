@@ -59,6 +59,16 @@ class Wallet extends Model
         return Cache::forget("{$this->getCacheKey()}_address");
     }
 
+    protected function addTransactionsAttribute(): Collection
+    {
+        return BCoin::getWalletTransactionsHistory($this->id);
+    }
+
+    protected function addPendingTransactionsAttribute(): Collection
+    {
+        return BCoin::getWalletPendingTransactions($this->id);
+    }
+
     protected function addCoinsAttribute(): Collection
     {
         return BCoin::getWalletCoins($this->id);
