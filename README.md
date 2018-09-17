@@ -49,10 +49,35 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
 
 ### Wallets
 ```
+
+    Create Wallet
+
 >>> BCoinNode::createWallet('my_wallet', ['witness' => true]);
+=> TPenaranda\BCoin\Models\Wallet {#3129
+     +"network": "main",
+     +"wid": 13201,
+     +"watchOnly": false,
+     +"accountDepth": 1,
+     +"token": "b1cd7d340e397cb62a0484ca16d1dcc71c1406a9b437283280e9b3fdbcb96def",
+     +"tokenDepth": 0,
+     +"master": {#3138
+       +"encrypted": false,
+     },
+     +"balance": {#3136
+       +"tx": 0,
+       +"coin": 0,
+       +"unconfirmed": 0,
+       +"confirmed": 0,
+     },
+   }
+>>>
+
+    Get Wallet
+
+>>> $wallet = BCoinNode::getWallet('my_other_wallet');
 => TPenaranda\BCoin\Models\Wallet {#3126
      +"network": "main",
-     +"wid": 1,
+     +"wid": 13202,
      +"watchOnly": false,
      +"accountDepth": 1,
      +"token": "20e2eb678be2679d6400aa733822b7eab68bca3148511403ba669ded830e7bcc",
@@ -67,11 +92,39 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
        +"confirmed": 0,
      },
    }
->>> $wallet = BCoinNode::getWallet();
->>> $wallet->getNestedAddress();
->>> $wallet->forgetCurrentAddress();
+>>>
+
+    Get Wallet nested address (only when ['witness' => true] opt was used for Wallet creation)
+
+>>> $wallet->address;
+=> "37vRA5NsGtnUoCtUtFAQmDWo6ucGi3J23C"
+>>> BCoinNode::getWallet('my_other_wallet')->address;
+=> "37vRA5NsGtnUoCtUtFAQmDWo6ucGi3J23C"
+>>>
+
+    Forget Wallet nested address
+
+>>> $wallet->forgetCurrentAddress(); //This clears Cache but doesn't update the Wallet model. You need to refresh the Model in order to get the new address.
+=> true
+>>> BCoinNode::getWallet('my_other_wallet')->address;
+=> "38EJvoLQmn7xG2iTeZ6ED6jrVLPND7Lo62"
+>>>
+
+    Send a Transaction
+
 >>> $wallet->sendTransaction($desination_address, $amount_in_satoshi, $opts = ['maxFee' => 150000, 'rate' => 35000]);
->>> $wallet->confirmed_satoshi; // Gets confirmed amount using 'number_of_confirmations_to_consider_transaction_done' config parameter.
+=> TPenaranda\BCoin\Models\Transaction {#3146 ...
+...
+>>>
+
+    Get Wallet balance taking in consideration 'number_of_confirmations_to_consider_transaction_done' config parameter.
+
+>>> $wallet->confirmed_satoshi;
+=> 23432534
+>>>
+
+    Get Wallet TXs History
+
 >>> $wallet->transactions;
 => Illuminate\Support\Collection {#3119
      all: [
@@ -80,20 +133,18 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
         …2290
      ],
    }
+>>>
+
+    Get Wallet Pending TXs
+
 >>> $wallet->pending_transactions;
 => Illuminate\Support\Collection {#62399
      all: [],
    }
 >>>
->>> BCoinNode::getWalletsIDs()
-=> Illuminate\Support\Collection {#3142
-     all: [
-       "primary",
-       "my_wallet",
-       "my_other_wallet",
-     ],
-   }
->>>
+
+    Get current Wallet coins
+
 >>> $wallet->coins;
 => Illuminate\Support\Collection {#30339
      all: [
@@ -103,14 +154,6 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
          +"value": 46800492,
          +"script": "00144cfaaf0ebacd93af2d7ab118060084c5196f0712",
          +"address": "bc1qfna27r46ekf67tt6kyvqvqyyc5vk7pcjn5syqz",
-         +"coinbase": false,
-       },
-       TPenaranda\BCoin\Models\Coin {#30342
-         +"version": 1,
-         +"height": 541721,
-         +"value": 62600407,
-         +"script": "0014b3dec72617087b0217afc529b92a9014054f3099",
-         +"address": "bc1qk00vwfshppasy9a0c55mj25szsz57vyeejx36z",
          +"coinbase": false,
        },
        TPenaranda\BCoin\Models\Coin {#30334
@@ -176,6 +219,7 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
      +"hex": "010000000001019ff01e554516ca712a94027c42fec553738f7134472ba6475b17f5c84e02658a0100000000ffffffff02725d30000000000017a914946a64eaac4551014e5941e5a337586807dda4e7875a64390d00000000160014552868a890cfa468cee7a32312959846e79ad66d02483045022100f2e29354bfa8b4f27704244046235e82a01779f846596e087f5d4e6c830299d302204ef0b954541ecf24041f8443bbeef66142a3eff8dfca44443134da68f29fd042012103453bb42e0e23849f7f596b85b084466c82446f902fdd1f9fdcfe221bbc58132a00000000",
      +"confirmations": 216,
    }
+>>>
 ```
 
 ### Server
@@ -215,6 +259,22 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
        +"external": 24,
      },
    }
+>>>
+
+    List Wallets IDs on node
+
+>>> BCoinNode::getWalletsIDs()
+=> Illuminate\Support\Collection {#3142
+     all: [
+       "primary",
+       "my_wallet",
+       "my_other_wallet",
+     ],
+   }
+>>>
+
+    Get an snapshot of mempool
+
 >>> BCoinNode::getMempool()
 => Illuminate\Support\Collection {#62368
      all: [
@@ -223,7 +283,13 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
        "af9e991ffff34b7068d4a565e8b5158c2de3a7f76158072ed22b3bb082d2cb78",
      ],
    }
->>>BCoinNode::addressBelongsToWallet(<address>, <wallet_id>) // Check if a BTC address belongs to a Node Wallet, returns bool.
+>>>
+
+    Check if a random address belongs to a Wallet within our Node.
+
+>>> BCoinNode::addressBelongsToWallet('bc1qx269xkv4nyx4nvl3fkl7qtf3sehgrv0fkcfvlc', 'my_other_wallet')
+=> true
+>>>
 ```
 
-# Donations => bitcoin:38NYkcaqSCxijvsfvgGexPsNkVZLfaTw54
+## Donations => bitcoin:38NYkcaqSCxijvsfvgGexPsNkVZLfaTw54
