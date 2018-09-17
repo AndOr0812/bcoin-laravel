@@ -1,12 +1,13 @@
 {
     "name": "tpenaranda/bcoin-laravel",
     "description": "A Laravel 5 package to connect with BCoin (bcoin.io) full node API.",
+    "keywords": ["tpenaranda", "bcoin", "laravel", "btc", "api", "node"],
     "type": "library",
     "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Tate Peñaranda",
-            "email": "tate@xenir.com.ar"
+            "email": "tate@blockinit.io"
         }
     ],
     "minimum-stability": "stable",
