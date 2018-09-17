@@ -31,6 +31,11 @@ class Transaction extends Model
         return self::BASE_CACHE_KEY_NAME . $this->hash;
     }
 
+    public function broadcast()
+    {
+        return BCoin::broadcastTransaction($this->hex);
+    }
+
     public function getWallet()
     {
         return BCoin::getWallet($this->wallet_id);

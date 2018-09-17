@@ -3,7 +3,7 @@
 namespace TPenaranda\BCoin;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ClientException as GuzzleClientException;
+use GuzzleHttp\Exception\{ClientException as GuzzleClientException, ServerException as GuzzleServerException}
 use Illuminate\Support\Collection;
 use TPenaranda\BCoin\Models\{Coin, Server, Transaction, Wallet};
 use Cache;
@@ -134,9 +134,8 @@ class BCoin
     {
         $destination_folder = str_finish($destination_folder, '/');
         $path = "{$destination_folder}walletdb-backup-" . now()->format('YmdHis') . '.ldb';
-        $response = json_decode(static::postToWalletAPI("/backup?path={$path}"));
 
-        return !empty($response->success);
+        return json_decode(static::postToWalletAPI("/backup?path={$path}"));
     }
 
     public function createWallet(string $wallet_id, array $opts = ['witness' => true])
@@ -202,31 +201,27 @@ class BCoin
         return collect(json_decode(static::getFromServerAPI('/mempool')) ?? []);
     }
 
-    public function broadcastTransaction(string $transaction_tx): bool
+    public static function broadcastTransaction(string $transaction_tx): bool
     {
-        $response = json_decode(static::postToServerAPI('/broadcast', ['tx' => $transaction_tx]));
-
-        return !empty($response->success);
+        return json_decode(static::postToServerAPI('/broadcast', ['tx' => $transaction_tx]));
     }
 
     public function broadcastAll(): bool
     {
-        $response = static::postToWalletAPI('/resend');
-
-        return !empty($response->success);
+        return json_decode(static::postToWalletAPI('/resend'));
     }
 
     public function zapWalletTransaction(string $wallet_id, string $transaction_hash): bool
     {
-        $response = static::deleteFromWalletAPI("/wallet/{$wallet_id}/tx/{$transaction_hash}");
-
-        return !empty($response->success);
+        try {
+            return json_decode(static::deleteFromWalletAPI("/wallet/{$wallet_id}/tx/{$transaction_hash}"));
+        } catch (GuzzleServerException $e) {
+            return json_decode($e->getResponse()->getBody()->getContents());
+        }
     }
 
     public function zapWalletTransactions(string $wallet_id, int $seconds = 259200): bool
     {
-        $response = static::postToWalletAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
-
-        return !empty($response->success);
+        return json_decode(static::postToWalletAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]));
     }
 }
