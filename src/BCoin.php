@@ -2,16 +2,16 @@
 
 namespace TPenaranda\BCoin;
 
-use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException as GuzzleClientException;
+use Illuminate\Support\Collection;
 use TPenaranda\BCoin\Models\{Coin, Server, Transaction, Wallet};
 use Cache;
 
 class BCoin
 {
-    const DEFAULT_MAX_TRANSACTION_FEE_IN_SATOSHI = 100000;
-    const DEFAULT_RATE_IN_SATOSHIS_PER_KB = 30000;
+    const DEFAULT_MAX_TRANSACTION_FEE_IN_SATOSHI = 150000;
+    const DEFAULT_RATE_IN_SATOSHIS_PER_KB = 35000;
 
     public function __construct()
     {
@@ -84,17 +84,22 @@ class BCoin
         return static::requestToWalletAPI($url, $payload, 'POST');
     }
 
-    public function getServer()
+    public static function deleteFromWalletAPI(string $url, array $payload = []): string
+    {
+        return static::requestToWalletAPI($url, $payload, 'DELETE');
+    }
+
+    public function getServer(): Server
     {
         return new Server();
     }
 
-    public static function getWallet(string $wallet_id = 'primary')
+    public function getWallet(string $wallet_id = 'primary'): Wallet
     {
         return new Wallet(['id' => $wallet_id]);
     }
 
-    public static function getWalletFromCache(string $wallet_id = 'primary')
+    public function getWalletFromCache(string $wallet_id = 'primary'): Wallet
     {
         if (!empty($wallet_cached = Cache::get(Wallet::BASE_CACHE_KEY_NAME . $wallet_id))) {
             return $wallet_cached;
@@ -103,19 +108,17 @@ class BCoin
         return new Wallet(['id' => $wallet_id]);
     }
 
-
-    public function getWalletsIDs()
+    public static function getWalletsIDs(): Collection
     {
         return collect(json_decode(static::getFromWalletAPI('/wallet')));
     }
 
-    public static function getTransaction(string $transaction_hash, string $wallet_id = null)
+    public static function getTransaction(string $transaction_hash, string $wallet_id = null): Transaction
     {
         return new Transaction(['hash' => $transaction_hash, 'wallet_id' => $wallet_id]);
     }
 
-
-    public static function getTransactionByAddress(string $transaction_address)
+    public static function getTransactionByAddress(string $transaction_address): Transaction
     {
         return new Transaction(static::getFromServerAPI("/tx/address/{$transaction_address}"));
     }
@@ -130,7 +133,7 @@ class BCoin
     public function backupWallets(string $destination_folder)
     {
         $destination_folder = str_finish($destination_folder, '/');
-        $path = "{$destination_folder}walletdb-backup-" . Carbon::now()->format('YmdHis') . '.ldb';
+        $path = "{$destination_folder}walletdb-backup-" . now()->format('YmdHis') . '.ldb';
         $response = json_decode(static::postToWalletAPI("/backup?path={$path}"));
 
         return !empty($response->success);
@@ -141,7 +144,7 @@ class BCoin
         return new Wallet(static::putOnWalletAPI("/wallet/{$wallet_id}", $opts));
     }
 
-    public static function getWalletTransactionsHistory(string $wallet_id)
+    public static function getWalletTransactionsHistory(string $wallet_id): Collection
     {
         $transactions = collect();
 
@@ -183,6 +186,22 @@ class BCoin
         });
     }
 
+    public static function getWalletPendingTransactions(string $wallet_id): Collection
+    {
+        $transactions = collect();
+
+        foreach (json_decode(static::getFromWalletAPI("/wallet/{$wallet_id}/tx/unconfirmed")) ?? [] as $transaction_data) {
+            $transactions->push(new Transaction($transaction_data));
+        }
+
+        return $transactions;
+    }
+
+    public function getMempool(): Collection
+    {
+        return collect(json_decode(static::getFromServerAPI('/mempool')) ?? []);
+    }
+
     public function broadcastTransaction(string $transaction_tx): bool
     {
         $response = json_decode(static::postToServerAPI('/broadcast', ['tx' => $transaction_tx]));
@@ -192,12 +211,19 @@ class BCoin
 
     public function broadcastAll(): bool
     {
-        $response = static::postToServerAPI('/resend');
+        $response = static::postToWalletAPI('/resend');
 
         return !empty($response->success);
     }
 
-    public function zapWalletTransactions(string $wallet_id, int $seconds = 900): bool
+    public function zapWalletTransaction(string $wallet_id, string $transaction_hash): bool
+    {
+        $response = static::deleteFromWalletAPI("/wallet/{$wallet_id}/tx/{$transaction_hash}");
+
+        return !empty($response->success);
+    }
+
+    public function zapWalletTransactions(string $wallet_id, int $seconds = 259200): bool
     {
         $response = static::postToWalletAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]);
 

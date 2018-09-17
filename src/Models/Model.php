@@ -21,7 +21,7 @@ abstract class Model
         } elseif (json_decode($model_data)) {
             $this->hydrate($model_data);
         } else {
-            throw new BCoinException("Can't construct BCoin Model with ${model_data} data. __construct method expects array, object or JSON encoded data.");
+            throw new BCoinException("Can't construct BCoin Model with ${model_data} data. __construct() magic method expects array, object or JSON encoded data.");
         }
 
         return true;
