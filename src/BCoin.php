@@ -3,7 +3,7 @@
 namespace TPenaranda\BCoin;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\{ClientException as GuzzleClientException, ServerException as GuzzleServerException}
+use GuzzleHttp\Exception\{ClientException as GuzzleClientException, ServerException as GuzzleServerException};
 use Illuminate\Support\Collection;
 use TPenaranda\BCoin\Models\{Coin, Server, Transaction, Wallet};
 use Cache;

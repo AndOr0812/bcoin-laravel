@@ -102,9 +102,10 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
 => "37vRA5NsGtnUoCtUtFAQmDWo6ucGi3J23C"
 >>>
 
-    Forget Wallet nested address
+    Forget Wallet nested address. (This clears Cache but doesn't update the Wallet model. You needto refresh the
+    Model in order to get the new address.)
 
->>> $wallet->forgetCurrentAddress(); //This clears Cache but doesn't update the Wallet model. You need to refresh the Model in order to get the new address.
+>>> $wallet->forgetCurrentAddress();
 => true
 >>> BCoinNode::getWallet('my_other_wallet')->address;
 => "38EJvoLQmn7xG2iTeZ6ED6jrVLPND7Lo62"
@@ -191,7 +192,7 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
            +"index": 1,
          },
          +"script": "",
-         +"witness": "02483045022100f2e29354bfa8b4f27704244046235e82a01779f846596e087f5d4e6c830299d302204ef0b954541ecf24041f8443bbeef66142a3eff8dfca44443134da68f29fd042012103453bb42e0e23849f7f596b85b084466c82446f902fdd1f9fdcfe221bbc58132a",
+         +"witness": "02483045022100f2e29354bfa8b4...596b85b084466c82446f902fdd1f9fdcfe221bbc58132a",
          +"sequence": 4294967295,
          +"coin": {#3158
            +"version": 1,
@@ -216,7 +217,7 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
        },
      ],
      +"locktime": 0,
-     +"hex": "010000000001019ff01e554516ca712a94027c42fec553738f7134472ba6475b17f5c84e02658a0100000000ffffffff02725d30000000000017a914946a64eaac4551014e5941e5a337586807dda4e7875a64390d00000000160014552868a890cfa468cee7a32312959846e79ad66d02483045022100f2e29354bfa8b4f27704244046235e82a01779f846596e087f5d4e6c830299d302204ef0b954541ecf24041f8443bbeef66142a3eff8dfca44443134da68f29fd042012103453bb42e0e23849f7f596b85b084466c82446f902fdd1f9fdcfe221bbc58132a00000000",
+     +"hex": "010000000001019ff01e554516ca712a94027c...b42e0e23849f7f596b8f902fdd1f9fdcfe221bbc58132a00000000",
      +"confirmations": 216,
    }
 >>>
