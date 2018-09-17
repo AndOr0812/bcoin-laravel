@@ -130,7 +130,7 @@ class BCoin
         })->flatten();
     }
 
-    public function backupWallets(string $destination_folder)
+    public function backupWallets(string $destination_folder): object
     {
         $destination_folder = str_finish($destination_folder, '/');
         $path = "{$destination_folder}walletdb-backup-" . now()->format('YmdHis') . '.ldb';
@@ -201,17 +201,17 @@ class BCoin
         return collect(json_decode(static::getFromServerAPI('/mempool')) ?? []);
     }
 
-    public static function broadcastTransaction(string $transaction_tx): bool
+    public static function broadcastTransaction(string $transaction_tx): object
     {
         return json_decode(static::postToServerAPI('/broadcast', ['tx' => $transaction_tx]));
     }
 
-    public function broadcastAll(): bool
+    public function broadcastAll(): object
     {
         return json_decode(static::postToWalletAPI('/resend'));
     }
 
-    public function zapWalletTransaction(string $wallet_id, string $transaction_hash): bool
+    public function zapWalletTransaction(string $wallet_id, string $transaction_hash): object
     {
         try {
             return json_decode(static::deleteFromWalletAPI("/wallet/{$wallet_id}/tx/{$transaction_hash}"));
@@ -220,7 +220,7 @@ class BCoin
         }
     }
 
-    public function zapWalletTransactions(string $wallet_id, int $seconds = 259200): bool
+    public function zapWalletTransactions(string $wallet_id, int $seconds = 259200): object
     {
         return json_decode(static::postToWalletAPI("/wallet/{$wallet_id}/zap", ['age' => $seconds]));
     }
