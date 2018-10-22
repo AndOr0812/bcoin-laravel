@@ -9,7 +9,7 @@ This packages integrates a Bitcoin (bcoin.io) node to a Laravel App by using BCo
 Also, it performs some calculations that bcoin node doesn't provide.
 Some basic Cache is used to avoid unnecesary API calls.
 
-Donations => bitcoin:38NYkcaqSCxijvsfvgGexPsNkVZLfaTw54
+Donations => bitcoin:3EVvypgXMWp3R2gWeJSzEhurMJcKtYgmL1
 
 ## Installation for Laravel 5
 
@@ -293,4 +293,4 @@ Example of bcoin server fire up (Listen on port 8333, so TCP 8332, 8333 and 8334
 >>>
 ```
 
-## Donations => bitcoin:38NYkcaqSCxijvsfvgGexPsNkVZLfaTw54
+## Donations => bitcoin:3EVvypgXMWp3R2gWeJSzEhurMJcKtYgmL1

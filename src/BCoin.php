@@ -172,7 +172,7 @@ class BCoin
 
     public static function addressBelongsToWallet(string $address, string $wallet_id): bool
     {
-        return Cache::rememberForever("tpenaranda-bcoin:address-{$address}-belongs-to-wallet-{$wallet_id}", function () use ($wallet_id, $address) {
+        return Cache::remember("tpenaranda-bcoin:address-{$address}-belongs-to-wallet-{$wallet_id}", $minutes = 60 * 24 * 7, function () use ($wallet_id, $address) {
             try {
                 return (bool) static::getFromWalletAPI("/wallet/{$wallet_id}/key/{$address}");
             } catch (GuzzleClientException $e) {
