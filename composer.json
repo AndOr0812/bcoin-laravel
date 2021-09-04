@@ -1,6 +1,6 @@
 {
-    "name": "tpenaranda/bcoin-laravel",
-    "description": "A Laravel 5 package to connect with BCoin (bcoin.io) full node API.",
+    "name": "andor0812/bcoin-laravel",
+    "description": "A Laravel 8 package to connect with BCoin (bcoin.io) full node API.",
     "keywords": ["tpenaranda", "bcoin", "laravel", "btc", "api", "node"],
     "type": "library",
     "license": "GPL-3.0-or-later",
